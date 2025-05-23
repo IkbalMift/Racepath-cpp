@@ -1,12 +1,13 @@
 #include <iostream>
+#include "game.h"
 
 using namespace std;
 
 void menu() {
-    while(true) {
+    while (true) {
         system("CLS");
         cout << "========================================" << endl;
-        cout << "| No |           MENU UTAMA            |" << endl; 
+        cout << "| No |           MENU UTAMA            |" << endl;
         cout << "========================================" << endl;
         cout << "| 1  | Play                            |" << endl;
         cout << "| 2  | Options                         |" << endl;
@@ -18,18 +19,22 @@ void menu() {
         cin >> pilihan;
         switch (pilihan) {
         case 1:
-            cout << "Play game";
+            mainGame();
             break;
         case 2:
-            cout << "Options";
+            cout << "Options belum tersedia...\n";
+            system("pause");
             break;
         case 3:
-            cout << "Scores";
+            cout << "Scores belum tersedia...\n";
+            system("pause");
             break;
         case 0:
-            cout << "Keluar dari program" << endl;
+            cout << "Keluar dari program\n";
             return;
         default:
+            cout << "Opsi tidak valid\n";
+            system("pause");
             break;
         }
     }
