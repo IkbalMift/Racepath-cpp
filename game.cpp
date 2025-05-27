@@ -140,5 +140,6 @@ void mainGame() {
     cout << "  ======================================\n";
     cin.ignore();
     cin.get(); // pause hingga user menekan enter
+}
 
 
