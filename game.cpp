@@ -6,6 +6,7 @@
 using namespace std;
 
 const int PANJANG_JALAN = 15;
+
 const string SIMBOL_JALAN = "- ";
 const string SIMBOL_KOSONG = "  ";
 const int TOTAL_LINTASAN = 6;
@@ -20,6 +21,7 @@ const vector<string> MOBIL = {
 };
 
 int posisiMobil = 1; // 0 = atas, 1 = tengah, 2 = bawah
+
 
 HANDLE konsol = GetStdHandle(STD_OUTPUT_HANDLE);
 
@@ -43,6 +45,7 @@ void isiJalur() {
             string pola = (j % 2 == 1 && i % 2 == 0) ? "- " : "  ";
             jalur[j].push(pola);
         }
+
     }
 }
 
@@ -112,11 +115,11 @@ void jalurBerjalan() {
 void mainGame() {
     system("CLS");
     isiJalur();
-
     CONSOLE_CURSOR_INFO cursorInfo;
     GetConsoleCursorInfo(konsol, &cursorInfo);
     cursorInfo.bVisible = false;
     SetConsoleCursorInfo(konsol, &cursorInfo);
+
 
     DWORD waktuMulai = GetTickCount(); // waktu mulai game (milidetik)
     const DWORD durasi = 60 * 1000; // 1 menit = 60.000 ms
@@ -138,6 +141,4 @@ void mainGame() {
     cin.ignore();
     cin.get(); // pause hingga user menekan enter
 
-    cursorInfo.bVisible = true;
-    SetConsoleCursorInfo(konsol, &cursorInfo);
-}
+
