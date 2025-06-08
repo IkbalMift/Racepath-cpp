@@ -1,34 +1,114 @@
 #include <iostream>
-#include <queue>
+#include <vector>
+#include <string>
 #include <conio.h>
 #include <windows.h>
 #include <cstdlib>
 #include <ctime>
-#include <vector>
-#include <string>
 
 using namespace std;
 
-// --- PENYESUAIAN UNTUK DOUBLE BUFFER ---
+class CustomQueue {
+private:
+    int top;
+    string isi[50]; 
+    const int ukuran = 50;
+public:
+    CustomQueue() {
+        top = 0;
+    }
+    void clear() {
+        top = 0; 
+    }
+
+    bool isEmpty() {
+        return (top == 0);
+    }
+    bool isFull() {
+        return (top >= ukuran);
+    }
+
+    void enqueue(string data) {
+        if (!isFull()) {
+            isi[top] = data;
+            top++;
+        }
+    }
+
+
+    void dequeue() {
+        if (!isEmpty()) {
+            for (int i = 0; i < top - 1; i++) {
+                isi[i] = isi[i + 1];
+            }
+            top--;
+        }
+    }
+    vector<string> getContents() {
+        vector<string> contents;
+        for(int i = 0; i < top; i++) {
+            contents.push_back(isi[i]);
+        }
+        return contents;
+    }
+    void updateBack(string data) {
+        if (!isEmpty()) {
+            isi[top - 1] = data;
+        }
+    }
+};
+
+class Graph {
+private:
+    int numVertices;
+    vector<int>* adjLists; // Adjacency List
+
+public:
+    // Constructor untuk membuat graph
+    Graph(int vertices) {
+        numVertices = vertices;
+        adjLists = new vector<int>[vertices];
+    }
+
+    // Menambahkan edge  antara dua node
+    void addEdge(int src, int dest) {
+        adjLists[src].push_back(dest);
+        adjLists[dest].push_back(src);
+    }
+
+    bool isConnected(int src, int dest) {
+        if (src < 0 || src >= numVertices || dest < 0 || dest >= numVertices) {
+            return false; // Posisi di luar jangkauan
+        }
+        for (int neighbor : adjLists[src]) {
+            if (neighbor == dest) {
+                return true;
+            }
+        }
+        return false;
+    }
+    
+    Graph() {
+        delete[] adjLists;
+    }
+};
+
+
 const int LEBAR_LAYAR = 110;
 const int TINGGI_LAYAR = 20;
 CHAR_INFO consoleBuffer[LEBAR_LAYAR * TINGGI_LAYAR];
 HANDLE hConsole;
 
-// Konstanta game
 const int PANJANG_JALAN = 50;
 const string SIMBOL_JALAN = "- ";
-const string SIMBOL_KOSONG = "  "; // Pastikan ini spasi biasa, bukan non-breaking space
+const string SIMBOL_KOSONG = "  ";
 const int TOTAL_LINTASAN = 6;
 const int TOTAL_CABANG = 3;
 
-queue<string> jalur[TOTAL_LINTASAN];
+CustomQueue jalur[TOTAL_LINTASAN]; 
+Graph jalanGraph(TOTAL_CABANG);
 
-const vector<string> MOBIL = {
-    "  . - - ` - .",
-    "  '- O - O -'"
-};
-
+const vector<string> MOBIL = { "  . - - ` - .", "  '- O - O -'" };
 const string RINTANGAN_ART = " /|||\\ ";
 const string RINTANGAN_MARKER = "##";
 
@@ -43,7 +123,6 @@ void gambarKeBuffer(int x, int y, const string& teks, WORD atribut = 7) {
         }
     }
 }
-
 void tampilkanBuffer() {
     COORD bufferSize = { LEBAR_LAYAR, TINGGI_LAYAR };
     COORD characterPos = { 0, 0 };
@@ -51,13 +130,12 @@ void tampilkanBuffer() {
     WriteConsoleOutputA(hConsole, consoleBuffer, bufferSize, characterPos, &writeArea);
 }
 
-
 void isiJalur() {
     srand((unsigned int)time(0));
     for (int i = 0; i < TOTAL_LINTASAN; i++) {
-        while (!jalur[i].empty()) jalur[i].pop();
+        jalur[i].clear();
         for (int j = 0; j < PANJANG_JALAN; j++) {
-            jalur[i].push((i % 2 == 1) ? SIMBOL_JALAN : SIMBOL_KOSONG);
+            jalur[i].enqueue((i % 2 == 1) ? SIMBOL_JALAN : SIMBOL_KOSONG);
         }
     }
 }
@@ -65,35 +143,24 @@ void isiJalur() {
 void pindahMobil() {
     if (_kbhit()) {
         char input = _getch();
-        if ((input == 'w' || input == 'W') && posisiMobil > 0) posisiMobil--;
-        else if ((input == 's' || input == 'S') && posisiMobil < TOTAL_CABANG - 1) posisiMobil++;
+        if (input == 'w' || input == 'W') {
+            if (jalanGraph.isConnected(posisiMobil, posisiMobil - 1)) {
+                posisiMobil--;
+            }
+        } else if (input == 's' || input == 'S') {
+            // Cek ke graph apakah ada jalur dari posisi sekarang ke bawah
+            if (jalanGraph.isConnected(posisiMobil, posisiMobil + 1)) {
+                posisiMobil++;
+            }
+        }
     }
 }
 
 void jalurBerjalan() {
     for (int i = 0; i < TOTAL_LINTASAN; i++) {
-        jalur[i].pop();
-        jalur[i].push((i % 2 == 1) ? SIMBOL_JALAN : SIMBOL_KOSONG);
+        jalur[i].dequeue();
+        jalur[i].enqueue((i % 2 == 1) ? SIMBOL_JALAN : SIMBOL_KOSONG);
     }
-}
-
-void tampilkanLayarAkhir() {
-    for(int i=0; i < LEBAR_LAYAR * TINGGI_LAYAR; ++i) { consoleBuffer[i] = {' ', 7}; }
-
-    string msg1 = "======================================";
-    string msg2 = "|                                    |";
-    string msg3 = "|   SELAMAT, SEMUA LEVEL SELESAI!    |";
-    string msg4 = "|    Tekan tombol apa saja untuk keluar...   |";
-
-    gambarKeBuffer(LEBAR_LAYAR / 2 - msg1.length() / 2, TINGGI_LAYAR / 2 - 3, msg1, 14);
-    gambarKeBuffer(LEBAR_LAYAR / 2 - msg2.length() / 2, TINGGI_LAYAR / 2 - 2, msg2, 14);
-    gambarKeBuffer(LEBAR_LAYAR / 2 - msg3.length() / 2, TINGGI_LAYAR / 2 - 1, msg3, 15);
-    gambarKeBuffer(LEBAR_LAYAR / 2 - msg2.length() / 2, TINGGI_LAYAR / 2,     msg2, 14);
-    gambarKeBuffer(LEBAR_LAYAR / 2 - msg4.length() / 2, TINGGI_LAYAR / 2 + 1, msg4, 14);
-    gambarKeBuffer(LEBAR_LAYAR / 2 - msg2.length() / 2, TINGGI_LAYAR / 2 + 2, msg2, 14);
-    gambarKeBuffer(LEBAR_LAYAR / 2 - msg1.length() / 2, TINGGI_LAYAR / 2 + 3, msg1, 14);
-
-    tampilkanBuffer();
 }
 
 
@@ -103,23 +170,18 @@ void mainGame() {
     GetConsoleCursorInfo(hConsole, &cursorInfo);
     cursorInfo.bVisible = false;
     SetConsoleCursorInfo(hConsole, &cursorInfo);
-
+    
+    jalanGraph.addEdge(0, 1); // Jalur antara lajur 0 dan 1
+    jalanGraph.addEdge(1, 2); // Jalur antara lajur 1 dan 2
+    
     const int totalLevel = 3;
     const DWORD durasi = 20 * 1000;
 
     for (int level = 1; level <= totalLevel; level++) {
-        int kecepatan;
-        int spawnRate;
-        if (level == 1) {
-            kecepatan = 50;
-            spawnRate = 40;
-        } else if (level == 2) {
-            kecepatan = 40;
-            spawnRate = 30;
-        } else {
-            kecepatan = 35;
-            spawnRate = 20;
-        }
+        int kecepatan, spawnRate;
+        if (level == 1) { kecepatan = 50; spawnRate = 40; } 
+        else if (level == 2) { kecepatan = 40; spawnRate = 30; } 
+        else { kecepatan = 35; spawnRate = 20; }
 
         isiJalur();
         posisiMobil = 1;
@@ -127,9 +189,7 @@ void mainGame() {
         int spawnCounter = 0;
 
         while (GetTickCount() - waktuMulai < durasi) {
-            for(int i=0; i < LEBAR_LAYAR * TINGGI_LAYAR; ++i) {
-                consoleBuffer[i] = {' ', 7};
-            }
+            for(int i=0; i < LEBAR_LAYAR * TINGGI_LAYAR; ++i) { consoleBuffer[i] = {' ', 7}; }
 
             gambarKeBuffer(0, 0, "Kontrol: W = atas, S = bawah", 15);
             gambarKeBuffer(0, 1, "Level: " + to_string(level) + " / " + to_string(totalLevel), 14);
@@ -144,21 +204,17 @@ void mainGame() {
                 gambarKeBuffer(4 + PANJANG_JALAN * 2, 4+i, "||", 8);
             }
 
-            queue<string> bufferJalan[TOTAL_LINTASAN];
-            for (int i = 0; i < TOTAL_LINTASAN; i++) bufferJalan[i] = jalur[i];
-
             for (int baris = 0; baris < TOTAL_LINTASAN; baris++) {
+                // Mengambil isi dari CustomQueue untuk digambar
+                vector<string> contents = jalur[baris].getContents();
                 string lineContent = "";
-                while(!bufferJalan[baris].empty()){
-                    lineContent += bufferJalan[baris].front();
-                    bufferJalan[baris].pop();
+                for(const auto& s : contents) {
+                    lineContent += s;
                 }
                 
                 string tempLine = lineContent;
                 size_t startPos = 0;
-                
                 gambarKeBuffer(4, 4 + baris, tempLine, 7);
-                
                 while((startPos = tempLine.find(RINTANGAN_MARKER, startPos)) != string::npos) {
                     gambarKeBuffer(4 + startPos, 4 + baris, RINTANGAN_ART, 12);
                     startPos += RINTANGAN_MARKER.length();
@@ -177,17 +233,12 @@ void mainGame() {
             spawnCounter++;
             if (spawnCounter >= spawnRate) {
                 spawnCounter = 0;
-                
                 int lajurAman = rand() % TOTAL_CABANG;
                 vector<int> lajurTidakAman;
-                for (int i = 0; i < TOTAL_CABANG; i++) {
-                    if (i != lajurAman) {
-                        lajurTidakAman.push_back(i);
-                    }
-                }
+                for (int i = 0; i < TOTAL_CABANG; i++) { if (i != lajurAman) { lajurTidakAman.push_back(i); } }
                 int targetLajur = lajurTidakAman[rand() % lajurTidakAman.size()];
                 int lintasan = targetLajur * 2 + 1;
-                jalur[lintasan].back() = RINTANGAN_MARKER;
+                jalur[lintasan].updateBack(RINTANGAN_MARKER);
             }
 
             Sleep(kecepatan);
@@ -202,9 +253,8 @@ void mainGame() {
             tampilkanBuffer();
             Sleep(2500);
         } else {
-            tampilkanLayarAkhir();
-            while (_kbhit()) _getch(); // Bersihkan sisa input
-            _getch(); 
+            while (_kbhit()) _getch();
+            _getch();
         }
     }
 
