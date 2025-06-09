@@ -318,12 +318,41 @@ void mainGame(int difficulty, float spawnMultiplier, float scoreMultiplier, stri
             spawnCounter++;
             if (spawnCounter >= spawnRate) {
                 spawnCounter = 0;
-                int lajurAman = rand() % TOTAL_CABANG;
-                vector<int> lajurTidakAman;
-                for (int i = 0; i < TOTAL_CABANG; i++) { if (i != lajurAman) { lajurTidakAman.push_back(i); } }
-                int targetLajur = lajurTidakAman[rand() % lajurTidakAman.size()];
-                int lintasan = targetLajur * 2 + 1;
-                jalur[lintasan].updateBack(RINTANGAN_MARKER);
+                int mode = rand() % 10; // 0-9, 0-2: double spawn (30%), 3-9: single spawn (70%)
+                if (mode < 3) {
+                    // Double spawn: pilih 2 lane berbeda (selain lajurAman)
+                    int lajurAman = rand() % TOTAL_CABANG;
+                    vector<int> lajurTidakAman;
+                    for (int i = 0; i < TOTAL_CABANG; i++) {
+                        if (i != lajurAman) lajurTidakAman.push_back(i);
+                    }
+                    // Pilih dua lane berbeda
+                    if (lajurTidakAman.size() >= 2) {
+                        int idx1 = rand() % lajurTidakAman.size();
+                        int idx2;
+                        do {
+                            idx2 = rand() % lajurTidakAman.size();
+                        } while (idx2 == idx1);
+                        int lintasan1 = lajurTidakAman[idx1] * 2 + 1;
+                        int lintasan2 = lajurTidakAman[idx2] * 2 + 1;
+                        jalur[lintasan1].updateBack(RINTANGAN_MARKER);
+                        jalur[lintasan2].updateBack(RINTANGAN_MARKER);
+                    } else {
+                        // fallback ke single spawn jika hanya satu lajurTidakAman
+                        int lintasan = lajurTidakAman[0] * 2 + 1;
+                        jalur[lintasan].updateBack(RINTANGAN_MARKER);
+                    }
+                } else {
+                    // Single spawn seperti biasa
+                    int lajurAman = rand() % TOTAL_CABANG;
+                    vector<int> lajurTidakAman;
+                    for (int i = 0; i < TOTAL_CABANG; i++) {
+                        if (i != lajurAman) lajurTidakAman.push_back(i);
+                    }
+                    int targetLajur = lajurTidakAman[rand() % lajurTidakAman.size()];
+                    int lintasan = targetLajur * 2 + 1;
+                    jalur[lintasan].updateBack(RINTANGAN_MARKER);
+                }
             }
 
             Sleep(kecepatan);
