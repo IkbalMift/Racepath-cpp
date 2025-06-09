@@ -260,8 +260,7 @@ void jalurBerjalan() {
     }
 }
 
-int score = 0;
-void tampilkanEndScreen(bool gameOver) {
+void tampilkanEndScreen(int score) {
     for(int i = 0; i < LEBAR_LAYAR * TINGGI_LAYAR; ++i) { consoleBuffer[i] = {' ', 7}; }
     string msg = "SELAMAT!";
     string msg2 = "Kamu telah menyelesaikan permainan!";
@@ -494,7 +493,7 @@ void mainGame(int difficulty, float spawnMultiplier, float scoreMultiplier, stri
             Sleep(2500);
 
         } else if (level == totalLevel) {
-            tampilkanEndScreen(false);
+            tampilkanEndScreen(score);
             while (_kbhit()) _getch();
             _getch();
         } 

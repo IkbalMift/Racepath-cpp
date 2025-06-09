@@ -126,13 +126,13 @@ void menu()
                 char diffChoice = _getch();
 
                 if (diffChoice == '1') {
-                    spawnMultiplier = 1.2f; scoreMultiplier = 1.0f;
+                    spawnMultiplier = 1.0f; scoreMultiplier = 1.0f;
                     difficulty = 1; break;
                 } else if (diffChoice == '2') {
-                    spawnMultiplier = 1.0f; scoreMultiplier = 1.5f;
+                    spawnMultiplier = 0.8f; scoreMultiplier = 1.5f;
                     difficulty = 2; break;
                 } else if (diffChoice == '3') {
-                    spawnMultiplier = 0.8f; scoreMultiplier = 2.0f;
+                    spawnMultiplier = 0.6f; scoreMultiplier = 2.0f;
                     difficulty = 3; break;
                 } else {
                     cout << "\nPilihan tidak valid, coba lagi!\n";
