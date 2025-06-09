@@ -250,6 +250,19 @@ void jalurBerjalan() {
     }
 }
 
+int score = 0;
+void tampilkanEndScreen(bool gameOver) {
+    for(int i = 0; i < LEBAR_LAYAR * TINGGI_LAYAR; ++i) { consoleBuffer[i] = {' ', 7}; }
+    string msg = "SELAMAT!";
+    string msg2 = "Kamu telah menyelesaikan permainan!";
+    string msg3 = "Skor: " + to_string(score);
+    gambarKeBuffer(LEBAR_LAYAR / 2 - (int)(msg.length()/2), TINGGI_LAYAR / 2, msg, 12);
+    gambarKeBuffer(LEBAR_LAYAR / 2 - (int)(msg2.length()/2), TINGGI_LAYAR / 2 + 1, msg2, 12);
+    gambarKeBuffer(LEBAR_LAYAR / 2 - (int)(msg3.length()/2), TINGGI_LAYAR / 2 + 2, msg3, 12);
+    tampilkanBuffer();
+    Sleep(3000);
+}
+
 // Tambah parameter untuk difficulty dan spawnMultiplier
 void mainGame(int difficulty, float spawnMultiplier, float scoreMultiplier, string user) {
     hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
@@ -473,10 +486,12 @@ void mainGame(int difficulty, float spawnMultiplier, float scoreMultiplier, stri
             gambarKeBuffer(LEBAR_LAYAR / 2 - msg2.length() / 2, TINGGI_LAYAR / 2 + 1, msg2, 14);
             tampilkanBuffer();
             Sleep(2500);
-        } else {
+
+        } else if (level == totalLevel) {
+            tampilkanEndScreen(false);
             while (_kbhit()) _getch();
             _getch();
-        }
+        } 
     }
 
     // Simpan skor ke file JSON setelah game selesai
