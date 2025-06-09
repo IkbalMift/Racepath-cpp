@@ -8,6 +8,8 @@
 #include <fstream>
 #include <algorithm>
 #include <nlohmann/json.hpp> // Library JSON modern C++ (https://github.com/nlohmann/json)
+#include <mmsystem.h> // Tambahkan untuk PlaySound
+#pragma comment(lib, "winmm.lib")
 
 using namespace std;
 
@@ -193,6 +195,8 @@ void cekTabrakan() {
     if (contents.size() > 1 && !invulnerable) {
         string depan = contents[0] + contents[1];
         if (depan.find(RINTANGAN_MARKER) != string::npos) {
+            // Sound effect rintangan
+            PlaySound(TEXT("hit.wav"), NULL, SND_FILENAME | SND_ASYNC);
             nyawa--;
             invulnerable = true;
             invulnerableStart = GetTickCount();
@@ -208,6 +212,8 @@ void cekTabrakan() {
         size_t posKoin = depanKoin.find(KOIN_MARKER);
         if (posKoin != string::npos) {
             koinShowCounter = KOIN_SHOW_FRAMES;
+            // Sound effect koin
+            PlaySound(TEXT("coin.wav"), NULL, SND_FILENAME | SND_ASYNC);
             // Tentukan cell mana yang kena koin, lalu hapus koin dari cell tersebut
             int cellIdx = 0, charCount = 0;
             for (; cellIdx < maxCek; ++cellIdx) {
