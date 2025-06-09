@@ -1,7 +1,8 @@
 #ifndef GAME_H
 #define GAME_H
 
-// Tambah parameter default
-void mainGame(int difficulty = 1, float spawnMultiplier = 1.0f);
+#include <string>
+void mainGame(int difficulty, float spawnMultiplier, std::string user);
+void simpanScore(const std::string& user, int score);
 
 #endif

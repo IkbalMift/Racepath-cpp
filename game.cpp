@@ -5,6 +5,9 @@
 #include <windows.h>
 #include <cstdlib>
 #include <ctime>
+#include <fstream>
+#include <algorithm>
+#include <nlohmann/json.hpp> // Library JSON modern C++ (https://github.com/nlohmann/json)
 
 using namespace std;
 
@@ -120,6 +123,28 @@ bool invulnerable = false;
 DWORD invulnerableStart = 0;
 const DWORD INVULNERABLE_DURATION = 2000; // 2 detik
 
+using json = nlohmann::json;
+
+// Fungsi untuk menyimpan skor ke file JSON
+void simpanScore(const string& user, int score) {
+    json data;
+    ifstream in("scores.json");
+    if (in.is_open()) {
+        try {
+            in >> data;
+        } catch (...) {
+            data = json::array();
+        }
+        in.close();
+    } else {
+        data = json::array();
+    }
+    data.push_back({ {"user", user}, {"score", score} });
+    ofstream out("scores.json");
+    out << data.dump(4);
+    out.close();
+}
+
 void gambarKeBuffer(int x, int y, const string& teks, WORD atribut = 7) {
     if (y >= TINGGI_LAYAR || x >= LEBAR_LAYAR) return;
     for (size_t i = 0; i < teks.length(); ++i) {
@@ -193,7 +218,7 @@ void jalurBerjalan() {
 }
 
 // Tambah parameter untuk difficulty dan spawnMultiplier
-void mainGame(int difficulty = 1, float spawnMultiplier = 1.0f) {
+void mainGame(int difficulty, float spawnMultiplier, string user) {
     hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
     CONSOLE_CURSOR_INFO cursorInfo;
     GetConsoleCursorInfo(hConsole, &cursorInfo);
@@ -208,6 +233,9 @@ void mainGame(int difficulty = 1, float spawnMultiplier = 1.0f) {
     const int totalLevel = 3;
     const DWORD durasi = 20 * 1000;
 
+    int score = 0;
+    int scoreMultiplier = 1;
+
     for (int level = 1; level <= totalLevel; level++) {
         int kecepatan, spawnRate;
         if (level == 1) { kecepatan = 40; spawnRate = 30; } 
@@ -216,6 +244,9 @@ void mainGame(int difficulty = 1, float spawnMultiplier = 1.0f) {
 
         // Modifikasi spawnRate sesuai difficulty
         spawnRate = static_cast<int>(spawnRate * spawnMultiplier);
+
+        // Set multiplier berdasarkan level
+        scoreMultiplier = level;
 
         isiJalur();
         posisiMobil = 1;
@@ -275,6 +306,12 @@ void mainGame(int difficulty = 1, float spawnMultiplier = 1.0f) {
                 gambarKeBuffer(6, posisiY_mobil + 1, MOBIL[1], invulnerable ? 14 : 10);
             }
 
+            // Tambahkan skor setiap frame
+            score += scoreMultiplier;
+
+            // Tampilkan skor di layar
+            gambarKeBuffer(50, 1, "| Score: " + to_string(score), 11);
+
             tampilkanBuffer();
 
             pindahMobil();
@@ -320,6 +357,9 @@ void mainGame(int difficulty = 1, float spawnMultiplier = 1.0f) {
             _getch();
         }
     }
+
+    // Simpan skor ke file JSON setelah game selesai
+    simpanScore(user, score);
 
     cursorInfo.bVisible = true;
     SetConsoleCursorInfo(hConsole, &cursorInfo);
