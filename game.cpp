@@ -114,6 +114,12 @@ const string RINTANGAN_MARKER = "##";
 
 int posisiMobil = 1;
 
+// Tambah variabel global untuk nyawa dan invulnerable
+int nyawa = 3;
+bool invulnerable = false;
+DWORD invulnerableStart = 0;
+const DWORD INVULNERABLE_DURATION = 2000; // 2 detik
+
 void gambarKeBuffer(int x, int y, const string& teks, WORD atribut = 7) {
     if (y >= TINGGI_LAYAR || x >= LEBAR_LAYAR) return;
     for (size_t i = 0; i < teks.length(); ++i) {
@@ -140,6 +146,29 @@ void isiJalur() {
     }
 }
 
+void cekTabrakan() {
+    // Cek apakah posisi mobil bertabrakan dengan rintangan
+    int lintasanMobil = posisiMobil * 2 + 1;
+    vector<string> contents = jalur[lintasanMobil].getContents();
+    // Mobil berada di kolom 6, artinya index ke-1 (karena 4 spasi di awal)
+    // Rintangan muncul di belakang, jadi cek 2 kolom pertama
+    // Cek apakah ada RINTANGAN_MARKER di posisi depan mobil
+    if (contents.size() > 1 && !invulnerable) {
+        string depan = contents[0] + contents[1];
+        if (depan.find(RINTANGAN_MARKER) != string::npos) {
+            nyawa--;
+            invulnerable = true;
+            invulnerableStart = GetTickCount();
+        }
+    }
+}
+
+void updateInvulnerable() {
+    if (invulnerable && (GetTickCount() - invulnerableStart >= INVULNERABLE_DURATION)) {
+        invulnerable = false;
+    }
+}
+
 void pindahMobil() {
     if (_kbhit()) {
         char input = _getch();
@@ -163,38 +192,51 @@ void jalurBerjalan() {
     }
 }
 
-
-void mainGame() {
+// Tambah parameter untuk difficulty dan spawnMultiplier
+void mainGame(int difficulty = 1, float spawnMultiplier = 1.0f) {
     hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
     CONSOLE_CURSOR_INFO cursorInfo;
     GetConsoleCursorInfo(hConsole, &cursorInfo);
     cursorInfo.bVisible = false;
     SetConsoleCursorInfo(hConsole, &cursorInfo);
-    
+
     jalanGraph.addEdge(0, 1); // Jalur antara lajur 0 dan 1
     jalanGraph.addEdge(1, 2); // Jalur antara lajur 1 dan 2
-    
+
+    nyawa = 3; // Reset nyawa di awal game
+
     const int totalLevel = 3;
     const DWORD durasi = 20 * 1000;
 
     for (int level = 1; level <= totalLevel; level++) {
         int kecepatan, spawnRate;
-        if (level == 1) { kecepatan = 50; spawnRate = 40; } 
-        else if (level == 2) { kecepatan = 40; spawnRate = 30; } 
-        else { kecepatan = 35; spawnRate = 20; }
+        if (level == 1) { kecepatan = 40; spawnRate = 30; } 
+        else if (level == 2) { kecepatan = 30; spawnRate = 20; } 
+        else { kecepatan = 20; spawnRate = 15; }
+
+        // Modifikasi spawnRate sesuai difficulty
+        spawnRate = static_cast<int>(spawnRate * spawnMultiplier);
 
         isiJalur();
         posisiMobil = 1;
         DWORD waktuMulai = GetTickCount();
         int spawnCounter = 0;
+        invulnerable = false;
+        invulnerableStart = 0;
 
-        while (GetTickCount() - waktuMulai < durasi) {
+        while (GetTickCount() - waktuMulai < durasi && nyawa > 0) {
             for(int i=0; i < LEBAR_LAYAR * TINGGI_LAYAR; ++i) { consoleBuffer[i] = {' ', 7}; }
 
             gambarKeBuffer(0, 0, "Kontrol: W = atas, S = bawah", 15);
             gambarKeBuffer(0, 1, "Level: " + to_string(level) + " / " + to_string(totalLevel), 14);
             DWORD waktuTersisa = durasi - (GetTickCount() - waktuMulai);
             gambarKeBuffer(20, 1, "| Waktu tersisa: " + to_string(waktuTersisa / 1000) + " detik", 14);
+            // Hapus baris ini (duplikat nyawa)
+            // gambarKeBuffer(60, 1, "| Nyawa: " + string(nyawa, 3), 12);
+
+            string nyawaStr = "Nyawa: ";
+            for (int i = 0; i < nyawa; ++i) nyawaStr += "\3 "; // ASCII heart
+            gambarKeBuffer(80, 1, nyawaStr, 12);
 
             string bingkai(PANJANG_JALAN * 2 + 6, '=');
             gambarKeBuffer(2, 3, bingkai, 8);
@@ -222,14 +264,24 @@ void mainGame() {
             }
 
             int posisiY_mobil = 4 + posisiMobil * 2;
-            gambarKeBuffer(6, posisiY_mobil, MOBIL[0], 10);
-            gambarKeBuffer(6, posisiY_mobil + 1, MOBIL[1], 10);
+            // Efek blinking jika invulnerable
+            bool tampilkanMobil = true;
+            if (invulnerable) {
+                DWORD blinkTime = (GetTickCount() - invulnerableStart) / 150;
+                tampilkanMobil = (blinkTime % 2 == 0);
+            }
+            if (tampilkanMobil) {
+                gambarKeBuffer(6, posisiY_mobil, MOBIL[0], invulnerable ? 14 : 10);
+                gambarKeBuffer(6, posisiY_mobil + 1, MOBIL[1], invulnerable ? 14 : 10);
+            }
 
             tampilkanBuffer();
-            
+
             pindahMobil();
             jalurBerjalan();
-            
+            cekTabrakan();
+            updateInvulnerable();
+
             spawnCounter++;
             if (spawnCounter >= spawnRate) {
                 spawnCounter = 0;
@@ -242,6 +294,17 @@ void mainGame() {
             }
 
             Sleep(kecepatan);
+        }
+
+        if (nyawa <= 0) {
+            for(int i=0; i < LEBAR_LAYAR * TINGGI_LAYAR; ++i) { consoleBuffer[i] = {' ', 7}; }
+            string msg = "GAME OVER!";
+            string msg2 = "Kamu kehabisan nyawa!";
+            gambarKeBuffer(LEBAR_LAYAR / 2 - msg.length() / 2, TINGGI_LAYAR / 2, msg, 12);
+            gambarKeBuffer(LEBAR_LAYAR / 2 - msg2.length() / 2, TINGGI_LAYAR / 2 + 1, msg2, 12);
+            tampilkanBuffer();
+            Sleep(3000);
+            break;
         }
 
         if (level < totalLevel) {
