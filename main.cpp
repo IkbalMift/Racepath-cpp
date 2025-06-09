@@ -49,6 +49,7 @@ void tampilkanTopScore() {
 void menu() {
     int difficulty = 1; 
     float spawnMultiplier = 1.0f;
+    float scoreMultiplier = 1.0f;
     string user;
 
     while (true) {
@@ -77,12 +78,15 @@ void menu() {
                 cout << "Pilihan (1-3): "; cin >> difficulty;
                 if (difficulty == 1) {
                     spawnMultiplier = 1.0f; // Normal
+                    scoreMultiplier = 1.0f;
                     break;
                 } else if (difficulty == 2) {
                     spawnMultiplier = 0.7f; // Hard
+                    scoreMultiplier = 1.5f;
                     break;
                 } else if (difficulty == 3) {
                     spawnMultiplier = 0.5f; // Extreme
+                    scoreMultiplier = 2.0f;
                     break;
                 } else {
                     cout << "Pilihan tidak valid, coba lagi!\n";
@@ -97,7 +101,7 @@ void menu() {
             cout << "Memulai permainan... tekan tombol apapun untuk melanjutkan.\n";
             system("pause");
 
-            mainGame(difficulty, spawnMultiplier, user);
+            mainGame(difficulty, spawnMultiplier, scoreMultiplier, user);
             break;
         case 2: {
             system("CLS");

@@ -218,7 +218,7 @@ void jalurBerjalan() {
 }
 
 // Tambah parameter untuk difficulty dan spawnMultiplier
-void mainGame(int difficulty, float spawnMultiplier, string user) {
+void mainGame(int difficulty, float spawnMultiplier, float scoreMultiplier, string user) {
     hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
     CONSOLE_CURSOR_INFO cursorInfo;
     GetConsoleCursorInfo(hConsole, &cursorInfo);
@@ -234,7 +234,6 @@ void mainGame(int difficulty, float spawnMultiplier, string user) {
     const DWORD durasi = 20 * 1000;
 
     int score = 0;
-    int scoreMultiplier = 1;
 
     for (int level = 1; level <= totalLevel; level++) {
         int kecepatan, spawnRate;
@@ -244,9 +243,6 @@ void mainGame(int difficulty, float spawnMultiplier, string user) {
 
         // Modifikasi spawnRate sesuai difficulty
         spawnRate = static_cast<int>(spawnRate * spawnMultiplier);
-
-        // Set multiplier berdasarkan level
-        scoreMultiplier = level;
 
         isiJalur();
         posisiMobil = 1;
@@ -307,7 +303,7 @@ void mainGame(int difficulty, float spawnMultiplier, string user) {
             }
 
             // Tambahkan skor setiap frame
-            score += scoreMultiplier;
+            score += static_cast<int>(scoreMultiplier * level);
 
             // Tampilkan skor di layar
             gambarKeBuffer(50, 1, "| Score: " + to_string(score), 11);
