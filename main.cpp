@@ -8,51 +8,79 @@ using json = nlohmann::json;
 
 using namespace std;
 
-void tampilkanTopScore() {
+void tampilkanTopScore()
+{
     std::ifstream in("scores.json");
     json data;
-    if (in.is_open()) {
-        try {
+    if (in.is_open())
+    {
+        try
+        {
             in >> data;
-        } catch (...) {
+        }
+        catch (...)
+        {
             data = json::array();
         }
         in.close();
-    } else {
+    }
+    else
+    {
         data = json::array();
     }
     // Ambil vector pair<score, user>
     std::vector<std::pair<int, std::string>> daftar;
-    for (const auto& entry : data) {
-        if (entry.contains("user") && entry.contains("score")) {
+    for (const auto &entry : data)
+    {
+        if (entry.contains("user") && entry.contains("score"))
+        {
             daftar.emplace_back(entry["score"].get<int>(), entry["user"].get<std::string>());
         }
     }
     // Urutkan dari skor terbesar
-    std::sort(daftar.begin(), daftar.end(), [](const auto& a, const auto& b) {
-        return a.first > b.first;
-    });
+    std::sort(daftar.begin(), daftar.end(), [](const auto &a, const auto &b)
+              { return a.first > b.first; });
     std::cout << "========== TOP 10 SCORE ==========" << std::endl;
     std::cout << "| No |      Nama      |   Score   |" << std::endl;
     std::cout << "----------------------------------" << std::endl;
     int n = std::min(10, (int)daftar.size());
-    for (int i = 0; i < n; ++i) {
-        std::cout << "| " << (i+1) << "  | ";
-        std::cout.width(13); std::cout << std::left << daftar[i].second << " | ";
-        std::cout.width(8); std::cout << std::right << daftar[i].first << " |" << std::endl;
+    for (int i = 0; i < n; ++i)
+    {
+        std::cout << "| " << (i + 1) << "  | ";
+        std::cout.width(13);
+        std::cout << std::left << daftar[i].second << " | ";
+        std::cout.width(8);
+        std::cout << std::right << daftar[i].first << " |" << std::endl;
     }
-    if (n == 0) std::cout << "|         Belum ada skor         |" << std::endl;
+    if (n == 0)
+        std::cout << "|         Belum ada skor         |" << std::endl;
     std::cout << "----------------------------------" << std::endl;
     system("pause");
 }
 
-void menu() {
-    int difficulty = 1; 
+bool isAlphanumeric(const std::string &s)
+{
+    if (s.empty())
+        return false; // tidak boleh kosong
+    for (char c : s)
+    {
+        if (!((c >= 'a' && c <= 'z') ||
+              (c >= 'A' && c <= 'Z') ||
+              (c >= '0' && c <= '9')))
+            return false;
+    }
+    return true;
+}
+
+void menu()
+{
+    int difficulty = 1;
     float spawnMultiplier = 1.0f;
     float scoreMultiplier = 1.0f;
     string user;
 
-    while (true) {
+    while (true)
+    {
         system("CLS");
         cout << "========================================" << endl;
         cout << "| No |           MENU UTAMA            |" << endl;
@@ -61,49 +89,76 @@ void menu() {
         cout << "| 2  | Options                         |" << endl;
         cout << "| 3  | Scores                          |" << endl;
         cout << "| 0  | Exit                            |" << endl;
-        cout << "========================================" << endl << endl;
+        cout << "========================================" << endl
+             << endl;
         cout << "Pilih opsi (0-3): ";
         int pilihan;
         cin >> pilihan;
-        switch (pilihan) {
+        switch (pilihan)
+        {
         case 1:
             system("CLS");
-            cout << "Masukkan nama Anda: "; cin >> user;
+            // cout << "Masukkan nama Anda: "; cin >> user;
+            while (true)
+            {
+                cout << "Masukkan nama Anda (huruf & angka saja, tanpa spasi/simbol): ";
+                cin >> user;
+
+                if (isAlphanumeric(user))
+                    break;
+
+                cout << "Nama hanya boleh huruf & angka saja. Coba lagi!\n";
+                system("pause"); // User baca dulu error-nya
+                system("CLS");   // Baru bersihkan layar
+            }
             cin.ignore(); // Clear newline character from input buffer
-            while (true) {
+            while (true)
+            {
                 cout << "Pilih Difficulty:" << endl;
                 cout << "1. Normal" << endl;
                 cout << "2. Hard" << endl;
                 cout << "3. Extreme" << endl;
-                cout << "Pilihan (1-3): "; cin >> difficulty;
-                if (difficulty == 1) {
+                cout << "Pilihan (1-3): ";
+                cin >> difficulty;
+                if (difficulty == 1)
+                {
                     spawnMultiplier = 1.0f; // Normal
                     scoreMultiplier = 1.0f;
                     break;
-                } else if (difficulty == 2) {
+                }
+                else if (difficulty == 2)
+                {
                     spawnMultiplier = 0.7f; // Hard
                     scoreMultiplier = 1.5f;
                     break;
-                } else if (difficulty == 3) {
+                }
+                else if (difficulty == 3)
+                {
                     spawnMultiplier = 0.5f; // Extreme
                     scoreMultiplier = 2.0f;
                     break;
-                } else {
+                }
+                else
+                {
                     cout << "Pilihan tidak valid, coba lagi!\n";
                     system("CLS");
                 }
             }
             cout << "Difficulty di-set ke ";
-            if (difficulty == 1) cout << "Normal\n";
-            else if (difficulty == 2) cout << "Hard\n";
-            else cout << "Extreme\n";
+            if (difficulty == 1)
+                cout << "Normal\n";
+            else if (difficulty == 2)
+                cout << "Hard\n";
+            else
+                cout << "Extreme\n";
 
             cout << "Memulai permainan... ";
             system("pause");
 
             mainGame(difficulty, spawnMultiplier, scoreMultiplier, user);
             break;
-        case 2: {
+        case 2:
+        {
             system("CLS");
             cout << "========== OPTIONS ==========" << endl;
             cout << "Pilih Difficulty:" << endl;
@@ -112,21 +167,31 @@ void menu() {
             cout << "3. Extreme" << endl;
             cout << "Pilihan (1-3): ";
             cin >> difficulty;
-            if (difficulty == 1) {
+            if (difficulty == 1)
+            {
                 spawnMultiplier = 1.0f;
-            } else if (difficulty == 2) {
+            }
+            else if (difficulty == 2)
+            {
                 spawnMultiplier = 0.7f;
-            } else if (difficulty == 3) {
-                spawnMultiplier = 0.5f; 
-            } else {
+            }
+            else if (difficulty == 3)
+            {
+                spawnMultiplier = 0.5f;
+            }
+            else
+            {
                 cout << "Pilihan tidak valid, tetap Normal.\n";
                 difficulty = 1;
                 spawnMultiplier = 1.0f;
             }
             cout << "Difficulty di-set ke ";
-            if (difficulty == 1) cout << "Normal\n";
-            else if (difficulty == 2) cout << "Hard\n";
-            else cout << "Extreme\n";
+            if (difficulty == 1)
+                cout << "Normal\n";
+            else if (difficulty == 2)
+                cout << "Hard\n";
+            else
+                cout << "Extreme\n";
             system("pause");
             break;
         }
@@ -145,7 +210,8 @@ void menu() {
     }
 }
 
-int main() {
+int main()
+{
     menu();
     return 0;
 }
