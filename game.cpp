@@ -8,7 +8,9 @@
 #include <fstream>
 #include <algorithm>
 #include <nlohmann/json.hpp> // Library JSON modern C++ (https://github.com/nlohmann/json)
-
+#include <mmsystem.h> // Tambahkan untuk PlaySound
+#pragma comment(lib, "winmm.lib")
+bool soundEnabled = true;
 using namespace std;
 
 class CustomQueue {
@@ -193,6 +195,10 @@ void cekTabrakan() {
     if (contents.size() > 1 && !invulnerable) {
         string depan = contents[0] + contents[1];
         if (depan.find(RINTANGAN_MARKER) != string::npos) {
+            // Sound effect rintangan
+            if (soundEnabled) {
+                PlaySound(TEXT("hit.wav"), NULL, SND_FILENAME | SND_ASYNC);
+            }
             nyawa--;
             invulnerable = true;
             invulnerableStart = GetTickCount();
@@ -208,6 +214,10 @@ void cekTabrakan() {
         size_t posKoin = depanKoin.find(KOIN_MARKER);
         if (posKoin != string::npos) {
             koinShowCounter = KOIN_SHOW_FRAMES;
+            // Sound effect koin
+            if (soundEnabled) {
+                PlaySound(TEXT("coin.wav"), NULL, SND_FILENAME | SND_ASYNC);
+            }
             // Tentukan cell mana yang kena koin, lalu hapus koin dari cell tersebut
             int cellIdx = 0, charCount = 0;
             for (; cellIdx < maxCek; ++cellIdx) {
@@ -265,7 +275,6 @@ void mainGame(int difficulty, float spawnMultiplier, float scoreMultiplier, stri
 
     const int totalLevel = 3;
     const DWORD durasi = 20 * 1000;
-
     int score = 0;
 
     for (int level = 1; level <= totalLevel; level++) {
@@ -450,10 +459,8 @@ void mainGame(int difficulty, float spawnMultiplier, float scoreMultiplier, stri
                     jalur[lintasanKoin].updateBack(KOIN_MARKER);
                 }
             }
-
             Sleep(kecepatan);
         }
-
         if (nyawa <= 0) {
             for(int i=0; i < LEBAR_LAYAR * TINGGI_LAYAR; ++i) { consoleBuffer[i] = {' ', 7}; }
             string msg = "GAME OVER!";
@@ -464,7 +471,6 @@ void mainGame(int difficulty, float spawnMultiplier, float scoreMultiplier, stri
             Sleep(3000);
             break;
         }
-
         if (level < totalLevel) {
             for(int i=0; i < LEBAR_LAYAR * TINGGI_LAYAR; ++i) { consoleBuffer[i] = {' ', 7}; }
             string msg = "Level " + to_string(level) + " Selesai!";
