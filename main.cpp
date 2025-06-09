@@ -98,7 +98,7 @@ void menu() {
             else if (difficulty == 2) cout << "Hard\n";
             else cout << "Extreme\n";
 
-            cout << "Memulai permainan... tekan tombol apapun untuk melanjutkan.\n";
+            cout << "Memulai permainan... ";
             system("pause");
 
             mainGame(difficulty, spawnMultiplier, scoreMultiplier, user);

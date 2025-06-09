@@ -59,6 +59,13 @@ public:
             isi[top - 1] = data;
         }
     }
+
+    // Tambahkan fungsi untuk mengubah elemen pada index tertentu
+    void setAt(int idx, const string& val) {
+        if (idx >= 0 && idx < top) {
+            isi[idx] = val;
+        }
+    }
 };
 
 class Graph {
@@ -114,6 +121,10 @@ Graph jalanGraph(TOTAL_CABANG);
 const vector<string> MOBIL = { "  . - - ` - .", "  '- O - O -'" };
 const string RINTANGAN_ART = " /|||\\ ";
 const string RINTANGAN_MARKER = "##";
+const string KOIN_MARKER = "$$";
+const string KOIN_ART = "  $  ";
+const int KOIN_SCORE = 300;
+const int KOIN_SHOW_FRAMES = 15; // Tampilkan "+300" selama 15 frame (~0.3-0.5 detik)
 
 int posisiMobil = 1;
 
@@ -122,6 +133,9 @@ int nyawa = 3;
 bool invulnerable = false;
 DWORD invulnerableStart = 0;
 const DWORD INVULNERABLE_DURATION = 2000; // 2 detik
+
+// Tambah variabel global untuk efek koin
+int koinShowCounter = 0;
 
 using json = nlohmann::json;
 
@@ -172,18 +186,37 @@ void isiJalur() {
 }
 
 void cekTabrakan() {
-    // Cek apakah posisi mobil bertabrakan dengan rintangan
+    // Cek apakah posisi mobil bertabrakan dengan rintangan atau koin
     int lintasanMobil = posisiMobil * 2 + 1;
     vector<string> contents = jalur[lintasanMobil].getContents();
-    // Mobil berada di kolom 6, artinya index ke-1 (karena 4 spasi di awal)
-    // Rintangan muncul di belakang, jadi cek 2 kolom pertama
-    // Cek apakah ada RINTANGAN_MARKER di posisi depan mobil
+    // Cek collision rintangan (2 cell terdepan)
     if (contents.size() > 1 && !invulnerable) {
         string depan = contents[0] + contents[1];
         if (depan.find(RINTANGAN_MARKER) != string::npos) {
             nyawa--;
             invulnerable = true;
             invulnerableStart = GetTickCount();
+        }
+    }
+    // Cek collision koin (perbesar: 4 cell terdepan)
+    if (contents.size() > 0) {
+        int maxCek = min(4, (int)contents.size());
+        string depanKoin = "";
+        for (int i = 0; i < maxCek; ++i) {
+            depanKoin += contents[i];
+        }
+        size_t posKoin = depanKoin.find(KOIN_MARKER);
+        if (posKoin != string::npos) {
+            koinShowCounter = KOIN_SHOW_FRAMES;
+            // Tentukan cell mana yang kena koin, lalu hapus koin dari cell tersebut
+            int cellIdx = 0, charCount = 0;
+            for (; cellIdx < maxCek; ++cellIdx) {
+                if (posKoin < charCount + contents[cellIdx].size()) break;
+                charCount += contents[cellIdx].size();
+            }
+            if (cellIdx < maxCek) {
+                jalur[lintasanMobil].setAt(cellIdx, (lintasanMobil % 2 == 1) ? SIMBOL_JALAN : SIMBOL_KOSONG);
+            }
         }
     }
 }
@@ -248,8 +281,11 @@ void mainGame(int difficulty, float spawnMultiplier, float scoreMultiplier, stri
         posisiMobil = 1;
         DWORD waktuMulai = GetTickCount();
         int spawnCounter = 0;
+        int koinSpawnCounter = 0;
         invulnerable = false;
         invulnerableStart = 0;
+        koinShowCounter = 0;
+        int pendingKoinScore = 0;
 
         while (GetTickCount() - waktuMulai < durasi && nyawa > 0) {
             for(int i=0; i < LEBAR_LAYAR * TINGGI_LAYAR; ++i) { consoleBuffer[i] = {' ', 7}; }
@@ -290,6 +326,23 @@ void mainGame(int difficulty, float spawnMultiplier, float scoreMultiplier, stri
                 }
             }
 
+            // Gambar koin di lintasan
+            for (int baris = 0; baris < TOTAL_LINTASAN; baris++) {
+                // Mengambil isi dari CustomQueue untuk digambar
+                vector<string> contents = jalur[baris].getContents();
+                string lineContent = "";
+                for(const auto& s : contents) {
+                    lineContent += s;
+                }
+                
+                string tempLine = lineContent;
+                size_t koinPos = tempLine.find(KOIN_MARKER);
+                while (koinPos != string::npos) {
+                    gambarKeBuffer(4 + koinPos, 4 + baris, KOIN_ART, 14);
+                    koinPos = tempLine.find(KOIN_MARKER, koinPos + KOIN_MARKER.length());
+                }
+            }
+
             int posisiY_mobil = 4 + posisiMobil * 2;
             // Efek blinking jika invulnerable
             bool tampilkanMobil = true;
@@ -305,8 +358,17 @@ void mainGame(int difficulty, float spawnMultiplier, float scoreMultiplier, stri
             // Tambahkan skor setiap frame
             score += static_cast<int>(scoreMultiplier * level);
 
+            // Tambahkan skor koin jika baru saja diambil
+            if (koinShowCounter == KOIN_SHOW_FRAMES - 1) {
+                score += KOIN_SCORE;
+            }
+
             // Tampilkan skor di layar
             gambarKeBuffer(50, 1, "| Score: " + to_string(score), 11);
+            if (koinShowCounter > 0) {
+                gambarKeBuffer(65, 1, "+300", 14);
+                koinShowCounter--;
+            }
 
             tampilkanBuffer();
 
@@ -316,6 +378,9 @@ void mainGame(int difficulty, float spawnMultiplier, float scoreMultiplier, stri
             updateInvulnerable();
 
             spawnCounter++;
+            koinSpawnCounter++;
+
+            // Spawn rintangan
             if (spawnCounter >= spawnRate) {
                 spawnCounter = 0;
                 int mode = rand() % 10; // 0-9, 0-2: double spawn (30%), 3-9: single spawn (70%)
@@ -352,6 +417,37 @@ void mainGame(int difficulty, float spawnMultiplier, float scoreMultiplier, stri
                     int targetLajur = lajurTidakAman[rand() % lajurTidakAman.size()];
                     int lintasan = targetLajur * 2 + 1;
                     jalur[lintasan].updateBack(RINTANGAN_MARKER);
+                }
+            }
+
+            // Spawn koin: setiap 45-70 frame (acak), tidak tergantung difficulty
+            static int nextKoinFrame = 0;
+            if (nextKoinFrame == 0) {
+                nextKoinFrame = 45 + rand() % 26; // 45-70 frame
+            }
+            if (koinSpawnCounter >= nextKoinFrame) {
+                koinSpawnCounter = 0;
+                nextKoinFrame = 45 + rand() % 26;
+                // Pilih lintasan random (hanya di lajur jalan, bukan kosong)
+                int lajurKoin = rand() % TOTAL_CABANG;
+                int lintasanKoin = lajurKoin * 2 + 1;
+                // Pastikan tidak menimpa rintangan/koin di 2 posisi belakang (seluruh cell, bukan hanya substring)
+                vector<string> isi = jalur[lintasanKoin].getContents();
+                bool aman = true;
+                int cekN = 3; // cek 3 cell terakhir
+                if (isi.size() >= cekN) {
+                    for (int i = 1; i <= cekN; ++i) {
+                        const string& cell = isi[isi.size() - i];
+                        if (cell.find(RINTANGAN_MARKER) != string::npos || cell.find(KOIN_MARKER) != string::npos) {
+                            aman = false;
+                            break;
+                        }
+                    }
+                } else {
+                    aman = false;
+                }
+                if (aman) {
+                    jalur[lintasanKoin].updateBack(KOIN_MARKER);
                 }
             }
 
