@@ -101,7 +101,7 @@ void menu()
             // cout << "Masukkan nama Anda: "; cin >> user;
             while (true)
             {
-                cout << "Masukkan nama Anda (huruf & angka saja, tanpa spasi/simbol): ";
+                cout << "Masukkan nama Anda (huruf & angka saja): ";
                 cin >> user;
 
                 if (isAlphanumeric(user))
