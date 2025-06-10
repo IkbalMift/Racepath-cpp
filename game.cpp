@@ -13,97 +13,98 @@
 bool soundEnabled = true;
 using namespace std;
 
-class CustomQueue {
-private:
+struct CustomQueue {
     int top;
-    string isi[50]; 
-    const int ukuran = 50;
-public:
-    CustomQueue() {
-        top = 0;
-    }
-    void clear() {
-        top = 0; 
-    }
-
-    bool isEmpty() {
-        return (top == 0);
-    }
-    bool isFull() {
-        return (top >= ukuran);
-    }
-
-    void enqueue(string data) {
-        if (!isFull()) {
-            isi[top] = data;
-            top++;
-        }
-    }
-
-
-    void dequeue() {
-        if (!isEmpty()) {
-            for (int i = 0; i < top - 1; i++) {
-                isi[i] = isi[i + 1];
-            }
-            top--;
-        }
-    }
-    vector<string> getContents() {
-        vector<string> contents;
-        for(int i = 0; i < top; i++) {
-            contents.push_back(isi[i]);
-        }
-        return contents;
-    }
-    void updateBack(string data) {
-        if (!isEmpty()) {
-            isi[top - 1] = data;
-        }
-    }
-
-    // Tambahkan fungsi untuk mengubah elemen pada index tertentu
-    void setAt(int idx, const string& val) {
-        if (idx >= 0 && idx < top) {
-            isi[idx] = val;
-        }
-    }
+    string isi[50];
+    static const int ukuran = 50;
 };
 
-class Graph {
-private:
+void CustomQueue_init(CustomQueue* q) {
+    q->top = 0;
+}
+
+void CustomQueue_clear(CustomQueue* q) {
+    q->top = 0;
+}
+
+bool CustomQueue_isEmpty(CustomQueue* q) {
+    return (q->top == 0);
+}
+
+bool CustomQueue_isFull(CustomQueue* q) {
+    return (q->top >= CustomQueue::ukuran);
+}
+
+void CustomQueue_enqueue(CustomQueue* q, const string& data) {
+    if (!CustomQueue_isFull(q)) {
+        q->isi[q->top] = data;
+        q->top++;
+    }
+}
+
+void CustomQueue_dequeue(CustomQueue* q) {
+    if (!CustomQueue_isEmpty(q)) {
+        for (int i = 0; i < q->top - 1; i++) {
+            q->isi[i] = q->isi[i + 1];
+        }
+        q->top--;
+    }
+}
+
+vector<string> CustomQueue_getContents(CustomQueue* q) {
+    vector<string> contents;
+    for (int i = 0; i < q->top; i++) {
+        contents.push_back(q->isi[i]);
+    }
+    return contents;
+}
+
+void CustomQueue_updateBack(CustomQueue* q, const string& data) {
+    if (!CustomQueue_isEmpty(q)) {
+        q->isi[q->top - 1] = data;
+    }
+}
+
+void CustomQueue_setAt(CustomQueue* q, int idx, const string& val) {
+    if (idx >= 0 && idx < q->top) {
+        q->isi[idx] = val;
+    }
+}
+
+struct Graph {
     int numVertices;
-    vector<int>* adjLists; // Adjacency List
+    vector<int>* adjLists;
+};
 
-public:
-    // Constructor untuk membuat graph
-    Graph(int vertices) {
-        numVertices = vertices;
-        adjLists = new vector<int>[vertices];
+void Graph_init(Graph* g, int vertices) {
+    g->numVertices = vertices;
+    g->adjLists = new vector<int>[vertices];
+}
+
+void Graph_destroy(Graph* g) {
+    delete[] g->adjLists;
+    g->adjLists = nullptr;
+    g->numVertices = 0;
+}
+
+void Graph_addEdge(Graph* g, int src, int dest) {
+    if (src >= 0 && src < g->numVertices && dest >= 0 && dest < g->numVertices) {
+        g->adjLists[src].push_back(dest);
+        g->adjLists[dest].push_back(src);
     }
+}
 
-    // Menambahkan edge  antara dua node
-    void addEdge(int src, int dest) {
-        adjLists[src].push_back(dest);
-        adjLists[dest].push_back(src);
-    }
-
-    bool isConnected(int src, int dest) {
-        if (src < 0 || src >= numVertices || dest < 0 || dest >= numVertices) {
-            return false; // Posisi di luar jangkauan
-        }
-        for (int neighbor : adjLists[src]) {
-            if (neighbor == dest) {
-                return true;
-            }
-        }
+bool Graph_isConnected(Graph* g, int src, int dest) {
+    if (src < 0 || src >= g->numVertices || dest < 0 || dest >= g->numVertices) {
         return false;
     }
-    
-    Graph() {
-        delete[] adjLists;
+    for (int neighbor : g->adjLists[src]) {
+        if (neighbor == dest) {
+            return true;
+        }
     }
-};
+    return false;
+}
 
 
 const int LEBAR_LAYAR = 110;
@@ -118,7 +119,7 @@ const int TOTAL_LINTASAN = 6;
 const int TOTAL_CABANG = 3;
 
 CustomQueue jalur[TOTAL_LINTASAN]; 
-Graph jalanGraph(TOTAL_CABANG);
+Graph jalanGraph;
 
 const vector<string> MOBIL = { "  . - - ` - .", "  '- O - O -'" };
 const string RINTANGAN_ART = " /|||\\ ";
@@ -180,9 +181,9 @@ void tampilkanBuffer() {
 void isiJalur() {
     srand((unsigned int)time(0));
     for (int i = 0; i < TOTAL_LINTASAN; i++) {
-        jalur[i].clear();
+        CustomQueue_init(&jalur[i]);
         for (int j = 0; j < PANJANG_JALAN; j++) {
-            jalur[i].enqueue((i % 2 == 1) ? SIMBOL_JALAN : SIMBOL_KOSONG);
+            CustomQueue_enqueue(&jalur[i], (i % 2 == 1) ? SIMBOL_JALAN : SIMBOL_KOSONG);
         }
     }
 }
@@ -190,7 +191,7 @@ void isiJalur() {
 void cekTabrakan() {
     // Cek apakah posisi mobil bertabrakan dengan rintangan atau koin
     int lintasanMobil = posisiMobil * 2 + 1;
-    vector<string> contents = jalur[lintasanMobil].getContents();
+    vector<string> contents = CustomQueue_getContents(&jalur[lintasanMobil]);
     // Cek collision rintangan (2 cell terdepan)
     if (contents.size() > 1 && !invulnerable) {
         string depan = contents[0] + contents[1];
@@ -225,7 +226,7 @@ void cekTabrakan() {
                 charCount += contents[cellIdx].size();
             }
             if (cellIdx < maxCek) {
-                jalur[lintasanMobil].setAt(cellIdx, (lintasanMobil % 2 == 1) ? SIMBOL_JALAN : SIMBOL_KOSONG);
+                CustomQueue_setAt(&jalur[lintasanMobil], cellIdx, (lintasanMobil % 2 == 1) ? SIMBOL_JALAN : SIMBOL_KOSONG);
             }
         }
     }
@@ -241,12 +242,12 @@ void pindahMobil() {
     if (_kbhit()) {
         char input = _getch();
         if (input == 'w' || input == 'W') {
-            if (jalanGraph.isConnected(posisiMobil, posisiMobil - 1)) {
+            if (Graph_isConnected(&jalanGraph, posisiMobil, posisiMobil - 1)) {
                 posisiMobil--;
             }
         } else if (input == 's' || input == 'S') {
             // Cek ke graph apakah ada jalur dari posisi sekarang ke bawah
-            if (jalanGraph.isConnected(posisiMobil, posisiMobil + 1)) {
+            if (Graph_isConnected(&jalanGraph, posisiMobil, posisiMobil + 1)) {
                 posisiMobil++;
             }
         }
@@ -255,8 +256,8 @@ void pindahMobil() {
 
 void jalurBerjalan() {
     for (int i = 0; i < TOTAL_LINTASAN; i++) {
-        jalur[i].dequeue();
-        jalur[i].enqueue((i % 2 == 1) ? SIMBOL_JALAN : SIMBOL_KOSONG);
+        CustomQueue_dequeue(&jalur[i]);
+        CustomQueue_enqueue(&jalur[i], (i % 2 == 1) ? SIMBOL_JALAN : SIMBOL_KOSONG);
     }
 }
 
@@ -300,8 +301,9 @@ void mainGame(int difficulty, float spawnMultiplier, float scoreMultiplier, stri
     cursorInfo.bVisible = false;
     SetConsoleCursorInfo(hConsole, &cursorInfo);
 
-    jalanGraph.addEdge(0, 1); // Jalur antara lajur 0 dan 1
-    jalanGraph.addEdge(1, 2); // Jalur antara lajur 1 dan 2
+    Graph_init(&jalanGraph, TOTAL_CABANG);
+    Graph_addEdge(&jalanGraph, 0, 1);
+    Graph_addEdge(&jalanGraph, 1, 2);
 
     nyawa = 3; // Reset nyawa di awal game
 
@@ -352,7 +354,7 @@ void mainGame(int difficulty, float spawnMultiplier, float scoreMultiplier, stri
 
             for (int baris = 0; baris < TOTAL_LINTASAN; baris++) {
                 // Mengambil isi dari CustomQueue untuk digambar
-                vector<string> contents = jalur[baris].getContents();
+                vector<string> contents = CustomQueue_getContents(&jalur[baris]);
                 string lineContent = "";
                 for(const auto& s : contents) {
                     lineContent += s;
@@ -370,7 +372,7 @@ void mainGame(int difficulty, float spawnMultiplier, float scoreMultiplier, stri
             // Gambar koin di lintasan
             for (int baris = 0; baris < TOTAL_LINTASAN; baris++) {
                 // Mengambil isi dari CustomQueue untuk digambar
-                vector<string> contents = jalur[baris].getContents();
+                vector<string> contents = CustomQueue_getContents(&jalur[baris]);
                 string lineContent = "";
                 for(const auto& s : contents) {
                     lineContent += s;
@@ -441,12 +443,12 @@ void mainGame(int difficulty, float spawnMultiplier, float scoreMultiplier, stri
                         } while (idx2 == idx1);
                         int lintasan1 = lajurTidakAman[idx1] * 2 + 1;
                         int lintasan2 = lajurTidakAman[idx2] * 2 + 1;
-                        jalur[lintasan1].updateBack(RINTANGAN_MARKER);
-                        jalur[lintasan2].updateBack(RINTANGAN_MARKER);
+                        CustomQueue_updateBack(&jalur[lintasan1], RINTANGAN_MARKER);
+                        CustomQueue_updateBack(&jalur[lintasan2], RINTANGAN_MARKER);
                     } else {
                         // fallback ke single spawn jika hanya satu lajurTidakAman
                         int lintasan = lajurTidakAman[0] * 2 + 1;
-                        jalur[lintasan].updateBack(RINTANGAN_MARKER);
+                        CustomQueue_updateBack(&jalur[lintasan], RINTANGAN_MARKER);
                     }
                 } else {
                     // Single spawn seperti biasa
@@ -457,7 +459,7 @@ void mainGame(int difficulty, float spawnMultiplier, float scoreMultiplier, stri
                     }
                     int targetLajur = lajurTidakAman[rand() % lajurTidakAman.size()];
                     int lintasan = targetLajur * 2 + 1;
-                    jalur[lintasan].updateBack(RINTANGAN_MARKER);
+                    CustomQueue_updateBack(&jalur[lintasan], RINTANGAN_MARKER);
                 }
             }
 
@@ -473,7 +475,7 @@ void mainGame(int difficulty, float spawnMultiplier, float scoreMultiplier, stri
                 int lajurKoin = rand() % TOTAL_CABANG;
                 int lintasanKoin = lajurKoin * 2 + 1;
                 // Pastikan tidak menimpa rintangan/koin di 2 posisi belakang (seluruh cell, bukan hanya substring)
-                vector<string> isi = jalur[lintasanKoin].getContents();
+                vector<string> isi = CustomQueue_getContents(&jalur[lintasanKoin]);
                 bool aman = true;
                 int cekN = 3; // cek 3 cell terakhir
                 if (isi.size() >= cekN) {
@@ -488,7 +490,7 @@ void mainGame(int difficulty, float spawnMultiplier, float scoreMultiplier, stri
                     aman = false;
                 }
                 if (aman) {
-                    jalur[lintasanKoin].updateBack(KOIN_MARKER);
+                    CustomQueue_updateBack(&jalur[lintasanKoin], KOIN_MARKER);
                 }
             }
             Sleep(kecepatan);
