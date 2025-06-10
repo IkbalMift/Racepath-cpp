@@ -10,9 +10,7 @@
 #include <nlohmann/json.hpp> // Library JSON modern C++ (https://github.com/nlohmann/json)
 #include <mmsystem.h> // Tambahkan untuk PlaySound
 #pragma comment(lib, "winmm.lib")
-
 bool soundEnabled = true;
-
 using namespace std;
 
 struct CustomQueue {
@@ -86,7 +84,7 @@ void Graph_init(Graph* g, int vertices) {
 void Graph_destroy(Graph* g) {
     delete[] g->adjLists;
     g->adjLists = nullptr;
-    g->numVertices = 0;f
+    g->numVertices = 0;
 }
 
 void Graph_addEdge(Graph* g, int src, int dest) {
@@ -108,6 +106,7 @@ bool Graph_isConnected(Graph* g, int src, int dest) {
     return false;
 }
 
+
 const int LEBAR_LAYAR = 110;
 const int TINGGI_LAYAR = 20;
 CHAR_INFO consoleBuffer[LEBAR_LAYAR * TINGGI_LAYAR];
@@ -119,11 +118,10 @@ const string SIMBOL_KOSONG = "  ";
 const int TOTAL_LINTASAN = 6;
 const int TOTAL_CABANG = 3;
 
-CustomQueue jalur[TOTAL_LINTASAN];
-
+CustomQueue jalur[TOTAL_LINTASAN]; 
 Graph jalanGraph;
 
-const vector<string> MOBIL = { "  . - - ` - .", "  '- O - O -'" };
+const vector<string> MOBIL = { "  . - -  - .", "  '- O - O -'" };
 const string RINTANGAN_ART = " /|||\\ ";
 const string RINTANGAN_MARKER = "##";
 const string KOIN_MARKER = "$$";
@@ -264,7 +262,7 @@ void jalurBerjalan() {
 }
 
 void tampilkanEndScreen(int score, bool failed, const string& user) {
-    for (int i = 0; i < LEBAR_LAYAR * TINGGI_LAYAR; ++i) { consoleBuffer[i] = { ' ', 7 }; }
+    for(int i = 0; i < LEBAR_LAYAR * TINGGI_LAYAR; ++i) { consoleBuffer[i] = {' ', 7}; }
 
     string msg = "GAME OVER!";
     string msg2 = "";
@@ -272,7 +270,7 @@ void tampilkanEndScreen(int score, bool failed, const string& user) {
     string msg4 = "Skor: " + to_string(score);
 
     // Hitung lebar kotak (ambil yang terpanjang)
-    int boxWidth = max({ msg.length(), msg3.length(), msg4.length() }) + 6;
+    int boxWidth = max({msg.length(), msg3.length(), msg4.length()}) + 6;
     int boxHeight = 6;
     int boxX = LEBAR_LAYAR / 2 - boxWidth / 2;
     int boxY = TINGGI_LAYAR / 2 - boxHeight / 2;
@@ -286,12 +284,9 @@ void tampilkanEndScreen(int score, bool failed, const string& user) {
     gambarKeBuffer(boxX, boxY + boxHeight - 1, topBot, 14);
 
     // Gambar pesan di tengah kotak (benar-benar di tengah)
-    gambarKeBuffer(boxX + (boxWidth - msg.length()) / 2,
-        boxY + 1, msg, 12);
-    gambarKeBuffer(boxX + (boxWidth - msg3.length()) / 2,
-        boxY + 3, msg3, 11);
-    gambarKeBuffer(boxX + (boxWidth - msg4.length()) / 2,
-        boxY + 4, msg4, 11);
+    gambarKeBuffer(boxX + (boxWidth - msg.length()) / 2,     boxY + 1, msg, 12);
+    gambarKeBuffer(boxX + (boxWidth - msg3.length()) / 2,    boxY + 3, msg3, 11);
+    gambarKeBuffer(boxX + (boxWidth - msg4.length()) / 2,    boxY + 4, msg4, 11);
 
     tampilkanBuffer();
     Sleep(3000);
@@ -317,8 +312,8 @@ void mainGame(int difficulty, float spawnMultiplier, float scoreMultiplier, stri
 
     for (int level = 1; level <= totalLevel; level++) {
         int kecepatan, spawnRate;
-        if (level == 1) { kecepatan = 40; spawnRate = 30; }
-        else if (level == 2) { kecepatan = 30; spawnRate = 20; }
+        if (level == 1) { kecepatan = 40; spawnRate = 30; } 
+        else if (level == 2) { kecepatan = 30; spawnRate = 20; } 
         else { kecepatan = 20; spawnRate = 15; }
 
         // Modifikasi spawnRate sesuai difficulty
@@ -335,7 +330,7 @@ void mainGame(int difficulty, float spawnMultiplier, float scoreMultiplier, stri
         int pendingKoinScore = 0;
 
         while (GetTickCount() - waktuMulai < durasi && nyawa > 0) {
-            for (int i = 0; i < LEBAR_LAYAR * TINGGI_LAYAR; ++i) { consoleBuffer[i] = { ' ', 7 }; }
+            for(int i=0; i < LEBAR_LAYAR * TINGGI_LAYAR; ++i) { consoleBuffer[i] = {' ', 7}; }
 
             gambarKeBuffer(0, 0, "Kontrol: W = atas, S = bawah", 15);
             gambarKeBuffer(0, 1, "Level: " + to_string(level) + " / " + to_string(totalLevel), 14);
@@ -351,23 +346,23 @@ void mainGame(int difficulty, float spawnMultiplier, float scoreMultiplier, stri
             string bingkai(PANJANG_JALAN * 2 + 6, '=');
             gambarKeBuffer(2, 3, bingkai, 8);
             gambarKeBuffer(2, 4 + TOTAL_LINTASAN, bingkai, 8);
-            for (int i = 0; i < TOTAL_LINTASAN; ++i) {
-                gambarKeBuffer(1, 4 + i, "||", 8);
-                gambarKeBuffer(4 + PANJANG_JALAN * 2, 4 + i, "||", 8);
+            for(int i=0; i<TOTAL_LINTASAN; ++i) {
+                gambarKeBuffer(1, 4+i, "||", 8);
+                gambarKeBuffer(4 + PANJANG_JALAN * 2, 4+i, "||", 8);
             }
 
             for (int baris = 0; baris < TOTAL_LINTASAN; baris++) {
                 // Mengambil isi dari CustomQueue untuk digambar
                 vector<string> contents = CustomQueue_getContents(&jalur[baris]);
                 string lineContent = "";
-                for (const auto& s : contents) {
+                for(const auto& s : contents) {
                     lineContent += s;
                 }
-
+                
                 string tempLine = lineContent;
                 size_t startPos = 0;
                 gambarKeBuffer(4, 4 + baris, tempLine, 7);
-                while ((startPos = tempLine.find(RINTANGAN_MARKER, startPos)) != string::npos) {
+                while((startPos = tempLine.find(RINTANGAN_MARKER, startPos)) != string::npos) {
                     gambarKeBuffer(4 + startPos, 4 + baris, RINTANGAN_ART, 12);
                     startPos += RINTANGAN_MARKER.length();
                 }
@@ -528,4 +523,3 @@ void mainGame(int difficulty, float spawnMultiplier, float scoreMultiplier, stri
     SetConsoleCursorInfo(hConsole, &cursorInfo);
     SetConsoleTextAttribute(hConsole, 7); 
 }
-
