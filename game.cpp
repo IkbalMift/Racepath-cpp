@@ -260,15 +260,34 @@ void jalurBerjalan() {
     }
 }
 
-int score = 0;
-void tampilkanEndScreen(bool gameOver) {
+void tampilkanEndScreen(int score, bool failed, const string& user) {
     for(int i = 0; i < LEBAR_LAYAR * TINGGI_LAYAR; ++i) { consoleBuffer[i] = {' ', 7}; }
-    string msg = "SELAMAT!";
-    string msg2 = "Kamu telah menyelesaikan permainan!";
-    string msg3 = "Skor: " + to_string(score);
-    gambarKeBuffer(LEBAR_LAYAR / 2 - (int)(msg.length()/2), TINGGI_LAYAR / 2, msg, 12);
-    gambarKeBuffer(LEBAR_LAYAR / 2 - (int)(msg2.length()/2), TINGGI_LAYAR / 2 + 1, msg2, 12);
-    gambarKeBuffer(LEBAR_LAYAR / 2 - (int)(msg3.length()/2), TINGGI_LAYAR / 2 + 2, msg3, 12);
+
+    string msg = (failed ? "GAME OVER!" : "SELAMAT!");
+    string msg2 = (failed ? "Kamu kehabisan nyawa!" : "Kamu telah menyelesaikan permainan!");
+    string msg3 = "Nama: " + user;
+    string msg4 = "Skor: " + to_string(score);
+
+    // Hitung lebar kotak (ambil yang terpanjang)
+    int boxWidth = max({msg.length(), msg2.length(), msg3.length(), msg4.length()}) + 6;
+    int boxHeight = 7;
+    int boxX = LEBAR_LAYAR / 2 - boxWidth / 2;
+    int boxY = TINGGI_LAYAR / 2 - boxHeight / 2;
+
+    // Gambar kotak
+    string topBot = "+" + string(boxWidth - 2, '-') + "+";
+    gambarKeBuffer(boxX, boxY, topBot, 14);
+    for (int i = 1; i < boxHeight - 1; ++i) {
+        gambarKeBuffer(boxX, boxY + i, "|" + string(boxWidth - 2, ' ') + "|", 14);
+    }
+    gambarKeBuffer(boxX, boxY + boxHeight - 1, topBot, 14);
+
+    // Gambar pesan di tengah kotak (benar-benar di tengah)
+    gambarKeBuffer(boxX + (boxWidth - msg.length()) / 2,     boxY + 1, msg, 12);
+    gambarKeBuffer(boxX + (boxWidth - msg2.length()) / 2,    boxY + 2, msg2, 12);
+    gambarKeBuffer(boxX + (boxWidth - msg3.length()) / 2,    boxY + 4, msg3, 11);
+    gambarKeBuffer(boxX + (boxWidth - msg4.length()) / 2,    boxY + 5, msg4, 11);
+
     tampilkanBuffer();
     Sleep(3000);
 }
@@ -475,13 +494,9 @@ void mainGame(int difficulty, float spawnMultiplier, float scoreMultiplier, stri
             Sleep(kecepatan);
         }
         if (nyawa <= 0) {
-            for(int i=0; i < LEBAR_LAYAR * TINGGI_LAYAR; ++i) { consoleBuffer[i] = {' ', 7}; }
-            string msg = "GAME OVER!";
-            string msg2 = "Kamu kehabisan nyawa!";
-            gambarKeBuffer(LEBAR_LAYAR / 2 - msg.length() / 2, TINGGI_LAYAR / 2, msg, 12);
-            gambarKeBuffer(LEBAR_LAYAR / 2 - msg2.length() / 2, TINGGI_LAYAR / 2 + 1, msg2, 12);
-            tampilkanBuffer();
-            Sleep(3000);
+            tampilkanEndScreen(score, user.empty(), user);
+            while (_kbhit()) _getch();
+            _getch();
             break;
         }
         if (level < totalLevel) {
@@ -494,7 +509,7 @@ void mainGame(int difficulty, float spawnMultiplier, float scoreMultiplier, stri
             Sleep(2500);
 
         } else if (level == totalLevel) {
-            tampilkanEndScreen(false);
+            tampilkanEndScreen(score, user.empty(), user);
             while (_kbhit()) _getch();
             _getch();
         } 
