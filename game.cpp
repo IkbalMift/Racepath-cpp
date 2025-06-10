@@ -264,14 +264,14 @@ void jalurBerjalan() {
 void tampilkanEndScreen(int score, bool failed, const string& user) {
     for(int i = 0; i < LEBAR_LAYAR * TINGGI_LAYAR; ++i) { consoleBuffer[i] = {' ', 7}; }
 
-    string msg = (failed ? "GAME OVER!" : "SELAMAT!");
-    string msg2 = (failed ? "Kamu kehabisan nyawa!" : "Kamu telah menyelesaikan permainan!");
+    string msg = "GAME OVER!";
+    string msg2 = "";
     string msg3 = "Nama: " + user;
     string msg4 = "Skor: " + to_string(score);
 
     // Hitung lebar kotak (ambil yang terpanjang)
-    int boxWidth = max({msg.length(), msg2.length(), msg3.length(), msg4.length()}) + 6;
-    int boxHeight = 7;
+    int boxWidth = max({msg.length(), msg3.length(), msg4.length()}) + 6;
+    int boxHeight = 6;
     int boxX = LEBAR_LAYAR / 2 - boxWidth / 2;
     int boxY = TINGGI_LAYAR / 2 - boxHeight / 2;
 
@@ -285,9 +285,8 @@ void tampilkanEndScreen(int score, bool failed, const string& user) {
 
     // Gambar pesan di tengah kotak (benar-benar di tengah)
     gambarKeBuffer(boxX + (boxWidth - msg.length()) / 2,     boxY + 1, msg, 12);
-    gambarKeBuffer(boxX + (boxWidth - msg2.length()) / 2,    boxY + 2, msg2, 12);
-    gambarKeBuffer(boxX + (boxWidth - msg3.length()) / 2,    boxY + 4, msg3, 11);
-    gambarKeBuffer(boxX + (boxWidth - msg4.length()) / 2,    boxY + 5, msg4, 11);
+    gambarKeBuffer(boxX + (boxWidth - msg3.length()) / 2,    boxY + 3, msg3, 11);
+    gambarKeBuffer(boxX + (boxWidth - msg4.length()) / 2,    boxY + 4, msg4, 11);
 
     tampilkanBuffer();
     Sleep(3000);
