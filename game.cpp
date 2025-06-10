@@ -71,7 +71,6 @@ void CustomQueue_setAt(CustomQueue* q, int idx, const string& val) {
     if (idx >= 0 && idx < q->top) {
         q->isi[idx] = val;
     }
-    
 }
 
 struct Graph {
@@ -87,9 +86,8 @@ void Graph_init(Graph* g, int vertices) {
 void Graph_destroy(Graph* g) {
     delete[] g->adjLists;
     g->adjLists = nullptr;
-    g->numVertices = 0;
+    g->numVertices = 0;f
 }
-
 
 void Graph_addEdge(Graph* g, int src, int dest) {
     if (src >= 0 && src < g->numVertices && dest >= 0 && dest < g->numVertices) {
@@ -316,11 +314,6 @@ void mainGame(int difficulty, float spawnMultiplier, float scoreMultiplier, stri
     const int totalLevel = 3;
     const DWORD durasi = 20 * 1000;
     int score = 0;
-
-    // Mulai putar musik
-    if (soundEnabled) {
-        PlaySound(TEXT("SURV1V3 - Daiki Kasho [Gran Turismo 7 Soundtrack] - Redline Racer.wav"), NULL, SND_FILENAME | SND_ASYNC | SND_LOOP);
-    }
 
     for (int level = 1; level <= totalLevel; level++) {
         int kecepatan, spawnRate;
