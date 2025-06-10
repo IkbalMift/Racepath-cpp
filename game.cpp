@@ -516,7 +516,7 @@ void mainGame(int difficulty, float spawnMultiplier, float scoreMultiplier, stri
         } 
     }
 
-    // Simpan skor ke file JSON setelah game selesai
+    // Simpan skor ke file JSON setelah game selesa
     simpanScore(user, score);
 
     cursorInfo.bVisible = true;

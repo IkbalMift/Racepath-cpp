@@ -26,7 +26,7 @@ void tampilkanMenuPengaturan() {
         pilihan = _getch(); // Langsung ngabaca input tanpa perlu Enter
 
         if (pilihan == '1') {
-            // Toggle: Jika true menjadi false, jika false menjadi true
+            // catatan: Jika true menjadi false, jika false menjadi true
             soundEnabled = !soundEnabled;
         }
 
